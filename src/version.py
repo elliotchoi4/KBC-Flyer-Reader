@@ -9,9 +9,9 @@ Use a plain "MAJOR.MINOR.PATCH" string (semantic versioning).
 """
 from __future__ import annotations
 
-VERSION = "1.0.1"
+VERSION = "1.0.0"
 
 # GitHub repository in "owner/repo" form. EDIT THIS to your repo after you
 # create it (e.g. "jdoe/kbc-flyer-reader"). The update checker queries
 # https://api.github.com/repos/<OWNER_REPO>/releases/latest
-GITHUB_OWNER_REPO = "elliotchoi4/kbc-flyer-reader"
+GITHUB_OWNER_REPO = "YOUR_GITHUB_USERNAME/kbc-flyer-reader"
