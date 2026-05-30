@@ -1,0 +1,29 @@
+# Core
+pydantic>=2.5,<3
+openpyxl>=3.1
+python-dateutil>=2.8
+phonenumbers>=8.13
+
+# PDF & images
+pdfplumber>=0.11
+PyMuPDF>=1.24
+Pillow>=10.0
+python-magic>=0.4    # mime sniffing (optional; falls back to suffix)
+python-magic-bin>=0.4.14; sys_platform == "win32"
+
+# OCR (one of the two — pytesseract is the default)
+pytesseract>=0.3.10
+# easyocr is opt-in; uncomment if you prefer it.
+# easyocr>=1.7
+
+# LLM client
+openai>=1.40         # Ollama's OpenAI-compatible endpoint
+instructor>=1.4      # Pydantic-enforced structured outputs
+anthropic>=0.40      # Claude API provider (optional — only if you use Claude)
+
+# GUI — modern themed widgets + drag-and-drop (both recommended)
+customtkinter>=5.2
+tkinterdnd2>=0.4
+
+# Packaging (only needed when building the .exe)
+# pyinstaller>=6.0

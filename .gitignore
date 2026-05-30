@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+build/
+dist/
+*.spec.bak
+*.egg-info/
+
+# Inno Setup build output
+installer_output/
+source.zip
+src_download/
+_set_output.py
+
+# Local app data + user-generated outputs
+config.json
+field_hints.json
+output/
+*.xlsx.tmp
+
+# Note: templates/*.xlsx and the "Flyer Reader Output/README.txt" ARE
+# tracked intentionally (they ship with the app). Do not add *.xlsx here.
+
