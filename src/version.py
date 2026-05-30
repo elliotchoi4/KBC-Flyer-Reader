@@ -9,7 +9,7 @@ Use a plain "MAJOR.MINOR.PATCH" string (semantic versioning).
 """
 from __future__ import annotations
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 # GitHub repository in "owner/repo" form. EDIT THIS to your repo after you
 # create it (e.g. "jdoe/kbc-flyer-reader"). The update checker queries

@@ -8,20 +8,33 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 
-def app_root() -> Path:
+def bundle_root() -> Path:
     """
-    Locate the application root.
+    Where bundled, read-only resources live (templates, assets).
 
-    - When running from source: the parent of the `src/` directory.
-    - When frozen by PyInstaller: the directory containing the .exe / bundled
-      resources (we keep `templates/` next to the executable in onedir mode,
-      or use sys._MEIPASS in onefile mode).
+    - Frozen: PyInstaller's extraction dir (sys._MEIPASS) when present,
+      else the executable's folder.
+    - Source: the parent of the `src/` directory.
     """
     if getattr(sys, "frozen", False):
-        # Onefile: PyInstaller unpacks to _MEIPASS. Onedir: alongside .exe.
         meipass = getattr(sys, "_MEIPASS", None)
         if meipass:
             return Path(meipass)
+        return Path(sys.executable).parent
+    return Path(__file__).resolve().parent.parent
+
+
+def app_root() -> Path:
+    """
+    The application's on-disk home for USER-FACING paths (e.g. the default
+    output folder).
+
+    - Frozen: the folder containing the .exe (so the output folder sits
+      next to the program the user installed, NOT inside PyInstaller's
+      hidden _internal/_MEIPASS area).
+    - Source: the parent of the `src/` directory.
+    """
+    if getattr(sys, "frozen", False):
         return Path(sys.executable).parent
     return Path(__file__).resolve().parent.parent
 
@@ -272,6 +285,6 @@ class Config:
         (user_data_dir() / "config.json").write_text(json.dumps(asdict(self), indent=2))
 
 
-TEMPLATES_DIR = app_root() / "templates"
+TEMPLATES_DIR = bundle_root() / "templates"
 BUILDING_TEMPLATE = TEMPLATES_DIR / "KBC_Template__Building_Survey_Locked.xlsx"
 LAND_TEMPLATE = TEMPLATES_DIR / "KBC_Template__Land_Survey_Locked.xlsx"

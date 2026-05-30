@@ -87,9 +87,12 @@ for the next step. Save both files.
 2. At the top, click **Publish repository**.
 3. In the dialog:
    - Confirm the **Name** is `kbc-flyer-reader`.
-   - **Untick "Keep this code private"** — the installer downloads the code
-     over the internet, which is simplest with a public repo. (If it must
-     be private, tell me and I'll adjust the installer to handle that.)
+   - **Leave "Keep this code private" UNticked (public).** The in-app update
+     check reads your repo's public Releases over the internet; a public
+     repo keeps that simple and needs no access tokens. (The installer
+     itself is self-contained and does *not* download anything — so if you
+     truly need the code private, the only thing affected is the update
+     check, which we can point elsewhere. Tell me if so.)
    - Click **Publish repository**.
 4. After a moment, go to `https://github.com/YOUR_USERNAME/kbc-flyer-reader`
    in your browser — your files should all be there.
@@ -112,25 +115,54 @@ a single `setup.exe` that, when run, shows:
 3. **"Where would you like to save output files to?"**
 4. **Install** progress → **Finish** (with an option to launch the app)
 
-During installation it downloads the code from your GitHub repo, creates a
-Python environment, installs dependencies, and sets your chosen output
-folder.
+This is the **self-contained** build: it bundles a pre-built copy of the app
+inside `setup.exe`. The **end user needs no Python and no internet** to
+install or run it. (They still need Tesseract for OCR and, for local
+extraction, Ollama — the app's Getting Started page explains this.)
+
+Building is **two steps on a Windows PC**: first build the app with
+PyInstaller, then wrap it with Inno Setup.
 
 ### 2.1 Install the build prerequisites (one time, on a Windows PC)
 
-1. **Inno Setup** — download from <https://jrsoftware.org/isdl.php> and
+1. **Python 3.11+** — from <https://www.python.org/downloads/windows/>.
+   During install, **tick "Add python.exe to PATH"**. (This is only needed
+   on *your* build machine, not on end users' machines.)
+2. **Inno Setup** — download from <https://jrsoftware.org/isdl.php> and
    install with defaults.
-2. **Python 3.11+** — from <https://www.python.org/downloads/windows/>.
-   During install, **tick "Add python.exe to PATH"**. (This is what the
-   *end user's* machine also needs; see the note at the bottom.)
 
-### 2.2 Build
+### 2.2 Step 1 — Build the app with PyInstaller
+
+Open **PowerShell** in the project folder (the one with `src/`,
+`flyer_reader.spec`, `installer.iss`) and run these lines one at a time:
+
+```
+py -3 -m venv build-venv
+build-venv\Scripts\activate
+pip install -r requirements.txt pyinstaller
+pyinstaller flyer_reader.spec
+```
+
+When it finishes you'll have a folder:
+
+```
+dist\KBC Flyer Reader\
+```
+
+containing **`KBC Flyer Reader.exe`** and everything it needs. (You can
+double-click that .exe to test the app before packaging, if you like.)
+
+> Re-run only `pyinstaller flyer_reader.spec` for future rebuilds — the venv
+> and pip install are one-time. If you ever change the version, bump it in
+> both `src/version.py` and the `MyAppVersion` line of `installer.iss`.
+
+### 2.3 Step 2 — Build the installer with Inno Setup
 
 Either:
 
 - **GUI:** double-click `installer.iss`, then in the Inno Setup Compiler
   press **Build → Compile** (or the ▶ button), **or**
-- **Command line:** open a terminal in the project folder and run:
+- **Command line:** in the project folder run:
 
   ```
   iscc installer.iss
@@ -145,22 +177,15 @@ The finished installer appears at:
 installer_output\KBC-Flyer-Reader-Setup.exe
 ```
 
-That single file is what you distribute to KBC staff.
+That single file is what you distribute to KBC staff — they just run it.
 
-### 2.3 What the end user needs
+### 2.4 What the end user needs
 
-Because the installer downloads source and builds a Python environment, the
-**end user's machine needs Python 3.11+ installed and on PATH**, plus an
-internet connection during installation. They also need Tesseract OCR and
-(for local extraction) Ollama — the same as before. The app's Getting
-Started page and README explain these.
-
-> **Alternative (no Python required on user machines):** if you'd rather the
-> installer carry a fully self-contained app, we can switch to bundling a
-> PyInstaller build inside the installer instead of downloading source. Say
-> the word and I'll provide that variant of `installer.iss`. It makes a
-> bigger `setup.exe` but removes the Python/internet requirement at install
-> time.
+Nothing to pre-install for the app itself — it's fully bundled. For full
+functionality they still need **Tesseract OCR** (for scanned/image flyers)
+and, only if they use the local engine, **Ollama**. The Claude engine just
+needs an API key entered in Settings. None of these are required to install
+or open the app.
 
 ---
 
@@ -175,9 +200,9 @@ higher version, the user sees:
 > **Update available** — Installed: 1.0.0, Latest: 1.1.0. Open the download
 > page to update now?
 
-Clicking **Yes** opens your repo's releases page in their browser. The check
-is silent and non-blocking: if they're offline or the repo can't be reached,
-nothing happens.
+Clicking **Yes** opens your repo's releases page in their browser, where you
+attach the new `setup.exe`. The check is silent and non-blocking: if they're
+offline or the repo can't be reached, nothing happens.
 
 ### 3.2 Publishing a new version
 
@@ -187,7 +212,12 @@ nothing happens.
 3. In **GitHub Desktop**, your changed files appear on the left. Type a
    short summary in the **Summary** box (e.g. `Release 1.1.0`), click
    **Commit to main**, then click **Push origin** at the top.
-4. Create a **GitHub Release** so the update check notices the new version:
+4. Rebuild the installer with the new version (Part 2): bump
+   `MyAppVersion` in `installer.iss` to match, run `pyinstaller
+   flyer_reader.spec`, then `iscc installer.iss`. This gives you a fresh
+   `installer_output\KBC-Flyer-Reader-Setup.exe`.
+5. Create a **GitHub Release** so the update check notices the new version
+   and users have something to download:
    - In your browser, go to your repo page and click **Releases** (right
      side) → **Draft a new release** (or **Create a new release**).
    - Click **Choose a tag**, type **`v1.1.0`** (must match the version you
@@ -195,13 +225,17 @@ nothing happens.
      **Create new tag on publish**.
    - Add a **Release title** (e.g. `v1.1.0`) and any notes describing what
      changed.
+   - **Drag `KBC-Flyer-Reader-Setup.exe` into the "Attach binaries" box** so
+     users who click through the update prompt can download the new
+     installer directly.
    - Click **Publish release**.
 
 That's it — running apps will detect `v1.1.0` on their next launch and
-prompt users to update. (If you also rebuild and redistribute `setup.exe`,
-bump `MyAppVersion` in `installer.iss` too before building.)
+prompt users to update; clicking **Yes** opens this release page where the
+new `setup.exe` is attached.
 
-> The update prompt currently sends users to the download page rather than
-> auto-installing. Fully automatic in-place updates are possible but riskier
-> (they require the app to overwrite its own files while running); the
-> open-the-page approach is the safe, conventional choice.
+> The update prompt sends users to the release page to download and run the
+> new installer, rather than auto-installing. Fully automatic in-place
+> updates are possible but riskier (they require the app to overwrite its
+> own files while running); the open-the-page approach is the safe,
+> conventional choice.
